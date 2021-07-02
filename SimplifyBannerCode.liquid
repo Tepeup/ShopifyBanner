@@ -1,0 +1,400 @@
+<!-- Simpify Motivator Banner, Debut Theme only -->
+<!-- By Tepeu Potter -->
+
+<script>
+    const formatMoney = (number) => {
+        const fixedNumber = Number(number).toFixed(2);
+        const formattedMoney = new Intl.NumberFormat("en-US", {
+            minimumFractionDigits: 2,
+        }).format(fixedNumber);
+    
+        return formattedMoney;
+    };
+    
+    function setCookie(cname, cvalue, exdays) {
+        var d = new Date();
+        d.setTime(d.getTime() + exdays * 24 * 60 * 60 * 1000);
+        var expires = "expires=" + d.toUTCString();
+        document.cookie = cname + "=" + cvalue + ";" + expires + ";path=/";
+    }
+    
+    function getCookie(cname) {
+        var name = cname + "=";
+        var decodedCookie = decodeURIComponent(document.cookie);
+        var ca = decodedCookie.split(";");
+        for (var i = 0; i < ca.length; i++) {
+            var c = ca[i];
+            while (c.charAt(0) == " ") {
+                c = c.substring(1);
+            }
+            if (c.indexOf(name) == 0) {
+                return c.substring(name.length, c.length);
+            }
+        }
+        return "";
+    }
+    
+    window.onreadystatechange = handler;
+    window.onload = handler;
+    
+    async function handler() {
+        let bannerSeen = getCookie("bannerSeen");
+        let isBannerLoaded = document.getElementById(".simplify-announcement-bar");
+        if (isBannerLoaded != null) {
+            isBannerLoaded.remove();
+        }
+    
+        await fetch("/cart.js")
+            .then((response) => response.json())
+            .then((data) => {
+                const cartSubTotal = data.items_subtotal_price;
+                strikePrice =
+                    ("{{section.settings.price-target}}" * 100 - cartSubTotal) / 100;
+            })
+            .catch((error) => {
+                console.error("Error:", error);
+            });
+    
+        if (strikePrice > 0) {
+            setCookie("bannerSeen", 0);
+        }
+    
+        const promptBanner = async() => {
+            await fetch("/cart.js")
+                .then((response) => response.json())
+                .then((data) => {
+                    const cartSubTotal = data.items_subtotal_price;
+                    strikePrice =
+                        ("{{section.settings.price-target}}" * 100 - cartSubTotal) / 100;
+                })
+                .catch((error) => {
+                    console.error("Error:", error);
+                });
+    
+            const congratulationsBannerHTML = `<div class="simplify-announcement-bar" >
+    <div class="simplify-container">
+         <div></div>
+         <div class="simplify-message">{{section.settings.Congratulations-Message}}</div>
+         <div>
+            <button id='close-button' onclick='this.parentNode.parentNode.parentNode.removeChild(this.parentNode.parentNode); return false;'>
+               <strong>&#10006</strong>
+            </button>
+         </div>
+    </div>
+         </div>`;
+    
+            const motivationBannerHTML = `<div class="simplify-announcement-bar" >
+    <div class="simplify-container">
+         <div></div>
+         <div class="simplify-message">{{section.settings.Motivational-Message-Pre}} <span class="strike-price">$${formatMoney(
+           strikePrice
+         )}</span> {{section.settings.Motivational-Message-After}}</div>
+    
+         <div>
+            <button id='close-button' onclick='this.parentNode.parentNode.parentNode.removeChild(this.parentNode.parentNode); return false;'>
+               <strong>&#10006</strong>
+            </button>
+         </div>
+    </div>
+         </div>`;
+    
+            const insertBanner = (divHTML) => {
+                let targetDiv = document.querySelector("#shopify-section-header");
+                let motivatorHTML = document.createElement(`div`);
+                  motivatorHTML.className = "simplify-announcement-parent";
+                let timeoutCalculation = "{{section.settings.delay}}" * 1000;
+                motivatorHTML.innerHTML = divHTML;
+                setTimeout(function() {
+                    targetDiv.prepend(motivatorHTML);
+                }, timeoutCalculation);
+            };
+    
+            if (strikePrice > 0) {
+                setCookie("bannerSeen", 0);
+                insertBanner(motivationBannerHTML);
+            } else {
+                setCookie("bannerSeen", 1);
+                insertBanner(congratulationsBannerHTML);
+            }
+        };
+    
+        if (bannerSeen == 0) {
+            let homeTimeoutCalculation = "{{section.settings.home-delay}}" * 1000;
+    
+            window.homepagecheck = function() {
+                var check = false;
+                if (document.location.pathname === "/") {
+                    check = true;
+                }
+                return check;
+            };
+    
+            if (window.homepagecheck()) {
+               
+                setTimeout(function() {
+                    promptBanner();
+                }, homeTimeoutCalculation);
+            } else {
+                promptBanner();
+            }
+        }
+    
+        let addToCartButton = document.querySelector(".product-form__cart-submit");
+    
+        if (addToCartButton != null) {
+            addToCartButton.addEventListener("click", (e) => {
+                let isBannerLoaded = document.querySelector(".simplify-announcement-bar");
+                if (isBannerLoaded != null) {
+                    isBannerLoaded.remove();
+                }
+                setTimeout(function() {
+                    promptBanner();
+                }, 1000);
+            });
+        }
+    
+        const cartDiv = document.querySelector(".cart__product-information");
+    
+        if (cartDiv != null) {
+            const matches = cartDiv.querySelector(".text-link");
+            matches.addEventListener("click", (e) => {
+                let isBannerLoaded = document.querySelector(".simplify-announcement-bar");
+                if (isBannerLoaded != null) {
+                    isBannerLoaded.remove();
+                }
+                setTimeout(function() {
+                    promptBanner();
+                }, 1000);
+            });
+        }
+    }
+    </script>
+    
+    <style>
+    :root {
+      --banner-duration: {{section.settings.duration}}s;
+      --banner-delay: {{section.settings.delay}}s;
+      --banner-background-color: {{ section.settings.Background-Color }};
+      --banner-price-color: {{section.settings.Price-Color}};
+      --banner-font-size: {{section.settings.font-size}}px;
+      --banner-px: {{section.settings.padding-x}}px;
+      --banner-py: {{section.settings.padding-y}}px;
+      --banner-image: {{section.settings.image}};
+      --banner-font-color: {{section.settings.font-color}};
+      --banner-price-size: {{section.settings.price-size}}px;
+    
+    
+    
+    
+     }
+    
+      
+    .simplify-announcement-parent{
+      width:inherit
+    }
+     
+    .simplify-announcement-bar {
+       
+        width: 100%;
+        max-height: 150px;
+        overflow-y: hidden;
+        z-index: 1000;
+        padding-left: inherit;
+        padding-right: inherit;
+        position: absolute;
+        top: -100px;
+        animation-delay: var(--banner-delay);
+        -webkit-animation: slidedown var(--banner-duration) forwards;
+        -moz-animation: slidedown var(--banner-duration) forwards;
+        -webkit-animation: slidedown var(--banner-duration) forwards;
+        -o-animation: slidedown var(--banner-duration) forwards;
+        animation: slidedown var(--banner-duration) forwards;
+        -webkit-animation-fill-mode: forwards;
+        animation-fill-mode: forwards;
+    }
+      
+     .simplify-container{
+        padding: var(--banner-py) var(--banner-px);
+        display: grid;
+        grid-template-columns: 1fr 8fr 1fr;
+        background-color: var(--banner-background-color);
+        color: var(--banner-font-color);
+          font-size: var(--banner-font-size);
+     }
+    
+    @keyframes slidedown {
+        0% {
+            top: -100px
+        }
+        10% {
+            top: 0px
+        }
+        90% {
+            top: 0px
+        }
+        100% {
+            top: -100px
+        }
+    }
+    
+    .simplify-message {
+        text-align: center;
+    }
+    
+    #close-button {
+        float: right;
+        background-color: inherit;
+        border: none;
+        padding: 0;
+        display: flex;
+        align-self: top;
+    }
+    
+    .strike-price {
+        color: var(--banner-price-color);
+        font-weight: bold;
+        font-size: var(--banner-price-size);
+    }
+    
+    #shopify-section-motivational-banner {
+        z-index: 100000
+    }
+      
+    ;
+    
+    
+    </style>
+    
+    
+    
+    
+    {% schema %}
+    {
+        "name": "Motivational Banner",
+        "class": "simplify-motivational-banner",
+        "settings": [{
+                "type": "header",
+                "content": "Message"
+            },
+            {
+                "type": "text",
+                "id": "Motivational-Message-Pre",
+                "label": "Pre Price Message",
+                "default": "Spend"
+            },
+            {
+                "type": "text",
+                "id": "Motivational-Message-After",
+                "label": "After Price Message",
+                "default": "more for a free item!"
+            },
+            {
+                "type": "text",
+                "id": "Congratulations-Message",
+                "label": "Congratulations Message",
+                "default": "Congrats you qualified for a free item!"
+            },
+            {
+                "type": "number",
+                "id": "price-target",
+                "label": "Motivational Price Target",
+                "default": 100
+            },
+            {
+                "type": "header",
+                "content": "Customization"
+            },
+            {
+                "type": "color",
+                "id": "Background-Color",
+                "label": "Banner Background Color",
+                "default": "#FFFFFF"
+    
+            },
+            {
+                "type": "color",
+                "id": "font-color",
+                "label": "Message Font Color",
+                "default": "#000000"
+            },
+            {
+                "type": "color",
+                "id": "Price-Color",
+                "label": "Price Font Color",
+                "default": "#FF0000"
+            },
+    
+            {
+                "type": "range",
+                "id": "duration",
+                "min": 0,
+                "max": 60,
+                "step": 1,
+                "unit": "s",
+                "label": "Banner Duration",
+                "default": 10
+            },
+            {
+                "type": "range",
+                "id": "delay",
+                "min": 0,
+                "max": 10,
+                "step": 1,
+                "unit": "s",
+                "label": "Banner Delay",
+                "default": 0
+            },
+            {
+                "type": "range",
+                "id": "home-delay",
+                "min": 0,
+                "max": 60,
+                "step": 1,
+                "unit": "s",
+                "label": "Additional Banner Delay on the Home Page Only",
+                "default": 0
+            },
+            {
+                "type": "range",
+                "id": "font-size",
+                "min": 6,
+                "max": 32,
+                "step": 1,
+                "unit": "px",
+                "label": "Banner Font size",
+                "default": 12
+            },
+            {
+                "type": "range",
+                "id": "price-size",
+                "min": 6,
+                "max": 32,
+                "step": 1,
+                "unit": "px",
+                "label": "Price Font size",
+                "default": 12
+            },
+            {
+                "type": "range",
+                "id": "padding-x",
+                "min": 0,
+                "max": 72,
+                "step": 1,
+                "unit": "px",
+                "label": "Banner Side Padding",
+                "default": 24
+            },
+            {
+                "type": "range",
+                "id": "padding-y",
+                "min": 0,
+                "max": 20,
+                "step": 1,
+                "unit": "px",
+                "label": "Banner Top Bottom Padding",
+                "default": 12
+            }
+    
+        ]
+    }
+    {% endschema %}
